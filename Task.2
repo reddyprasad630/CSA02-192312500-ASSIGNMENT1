@@ -1,0 +1,94 @@
+TASK 2 – Choose the Data Types (4 Marks)
+1. Data types, sizes and ranges
+C data type sizes depend on the compiler and system. The following table gives typical sizes on a modern 64-bit system; the actual sizes should be verified using sizeof().
+Data type	Typical size	Range / purpose
+char	1 byte	−128 to 127 or 0 to 255, depending on signedness
+unsigned short	2 bytes	0 to 65,535 on the assumed system
+int	4 bytes	−2,147,483,648 to 2,147,483,647
+unsigned int	4 bytes	0 to 4,294,967,295
+long	4 or 8 bytes	System-dependent
+long long	8 bytes	At least −9.22 × 10¹⁸ to 9.22 × 10¹⁸
+float	4 bytes	Approximately 6–7 decimal digits of precision
+double	8 bytes	Approximately 15–16 decimal digits of precision
+uint64_t	8 bytes, if available	0 to 18,446,744,073,709,551,615
+
+limits.h provides integer limits such as INT_MAX and USHRT_MAX. float.h provides floating-point limits and precision information such as FLT_DIG, DBL_DIG, FLT_MAX and DBL_MAX.
+
+Justification: unsigned short is suitable for a 16-bit meter register. unsigned int can store individual consumption values, while a 64-bit integer storing paise is suitable for accumulating billing amounts across a large district. Use char for a category code and integer household identifiers for record identification.
+
+CODE:
+
+
+#include <stdio.h>
+#include <limits.h>
+#include <float.h>
+#include <stdint.h>
+
+/* The meter register is a 16-bit counter */
+typedef unsigned short meter_t;
+
+unsigned int consumption(meter_t previous, meter_t current)
+{
+    // Conversion back to meter_t applies modulo 65536
+    return (meter_t)(current - previous);
+}
+
+int main(void)
+{
+    printf("sizeof(meter_t) = %zu bytes, maximum reading = %u\n",
+           sizeof(meter_t), (unsigned)USHRT_MAX);
+
+    printf("Consumption: %u units\n", consumption(1200, 1530));
+    printf("Consumption: %u units\n", consumption(65400, 120));
+
+    printf("\nInteger limits:\n");
+    printf("INT_MAX = %d\n", INT_MAX);
+    printf("UINT_MAX = %u\n", UINT_MAX);
+    printf("LLONG_MAX = %lld\n", LLONG_MAX);
+
+    printf("\nFloating-point information:\n");
+    printf("sizeof(float) = %zu bytes\n", sizeof(float));
+    printf("FLT_DIG = %d\n", FLT_DIG);
+    printf("sizeof(double) = %zu bytes\n", sizeof(double));
+    printf("DBL_DIG = %d\n", DBL_DIG);
+
+    float float_total = 0.0f;
+    uint64_t paise_total = 0;
+
+    for (int i = 0; i < 4000; i++) {
+        float_total += 0.10f; // Rs. 0.10 per bill
+        paise_total += 10;    // 10 paise per bill
+    }
+
+    printf("\nFloat total for 4000 bills = Rs. %.2f\n",
+           float_total);
+    printf("Integer paise total = Rs. %llu.%02llu\n",
+           (unsigned long long)(paise_total / 100),
+           (unsigned long long)(paise_total % 100));
+
+    return 0;
+}
+
+OUTPUT:
+
+sizeof(meter_t) = 2 bytes, maximum reading = 65535
+Consumption: 330 units
+Consumption: 256 units
+
+Integer limits:
+INT_MAX = 2147483647
+UINT_MAX = 4294967295
+LLONG_MAX = 9223372036854775807
+
+Floating-point information:
+sizeof(float) = 4 bytes
+FLT_DIG = 6
+sizeof(double) = 8 bytes
+DBL_DIG = 15
+
+Float total for 4000 bills = Rs. 400.02
+Integer paise total = Rs. 400.00
+
+
+
+
