@@ -1,0 +1,122 @@
+TASK 11 – Recommend and Defend the Final Design (4 Marks)
+1. Recommended data types
+Based on the billing experiments, the final design should use integer paise for money, unsigned integers for meter readings and centralized tariff constants.
+Data item	Recommended type	Reason
+Household ID	uint32_t	Stores positive household identifiers
+Previous/current readings	uint16_t	Represents meter values from 0 to 65,535
+Units consumed	uint32_t	Supports consumption calculations, including rollover
+Tariff rates	#define constants or validated configuration values	Keeps tariff changes consistent
+Energy charge	uint64_t	Stores monetary values in paise without fractional errors
+Total bill	uint64_t	Supports large bills and district-scale totals
+Category	enum or char	Represents household categories
+Debug messages	#ifdef DEBUG	Keeps diagnostic output out of normal builds.
+
+CODE:
+
+
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+
+#define METER_MAX 65535U
+#define METER_MODULUS 65536U
+#define SLAB1_UNITS 100U
+#define SLAB2_UNITS 200U
+#define RATE2_PAISE 225ULL
+#define RATE3_PAISE 450ULL
+#define FIXED_CHARGE_PAISE 5000ULL
+
+uint32_t calculate_units(uint16_t previous, uint16_t current)
+{
+    return (uint16_t)(current - previous);
+}
+
+uint64_t calculate_bill(uint32_t units)
+{
+    uint64_t energy = 0;
+
+    if (units > SLAB1_UNITS) {
+        uint32_t slab2 = (units < SLAB2_UNITS)
+                       ? units - SLAB1_UNITS
+                       : SLAB2_UNITS - SLAB1_UNITS;
+
+        energy += (uint64_t)slab2 * RATE2_PAISE;
+    }
+
+    if (units > SLAB2_UNITS) {
+        energy += (uint64_t)(units - SLAB2_UNITS)
+                  * RATE3_PAISE;
+    }
+
+    return energy + FIXED_CHARGE_PAISE;
+}
+
+void print_amount(uint64_t paise)
+{
+    printf("Rs. %" PRIu64 ".%02" PRIu64,
+           paise / 100, paise % 100);
+}
+
+int main(void)
+{
+    unsigned int previous, current;
+    uint32_t units;
+    uint64_t bill;
+    uint64_t district_total = 0;
+
+    printf("Enter previous and current meter readings: ");
+
+    if (scanf("%u %u", &previous, &current) != 2 ||
+        previous > METER_MAX || current > METER_MAX) {
+        printf("Invalid meter readings!\n");
+        return 1;
+    }
+
+    if (current < previous &&
+        (previous < 65000U || current > 1000U)) {
+        printf("Invalid or unconfirmed meter rollover!\n");
+        return 1;
+    }
+
+    units = calculate_units((uint16_t)previous,
+                            (uint16_t)current);
+    bill = calculate_bill(units);
+
+    printf("\n--- Household Electricity Bill ---\n");
+    printf("Units consumed: %" PRIu32 "\n", units);
+    printf("Energy charge: ");
+    print_amount(bill - FIXED_CHARGE_PAISE);
+    printf("\nFixed charge: Rs. 50.00\n");
+    printf("Total bill: ");
+    print_amount(bill);
+    printf("\n");
+
+    /* District-scale estimate: 800,000 identical bills */
+    district_total = bill * 800000ULL;
+
+    printf("\nDistrict total for 800000 identical bills: ");
+    print_amount(district_total);
+    printf("\n");
+
+    return 0;
+}
+
+SAMPLE INPUT AND OUTPUT:
+
+100 250
+
+OUTPUT:
+
+Enter previous and current meter readings: 100 250
+
+--- Household Electricity Bill ---
+Units consumed: 150
+Energy charge: Rs. 112.50
+Fixed charge: Rs. 50.00
+Total bill: Rs. 162.50
+
+District total for 800000 identical bills: Rs. 130000000.00
+
+
+
+
