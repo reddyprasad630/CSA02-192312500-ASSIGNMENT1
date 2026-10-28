@@ -1,0 +1,81 @@
+TASK 3 – Define the Constants (3 Marks)
+1. Brief explanation
+Constants store values that should remain unchanged during program execution. In the electricity billing system, tariff rates, slab limits and fixed charges should be defined in one place so that a tariff revision updates every bill consistently.
+Types of constants in C
+Feature	#define	const variable	enum
+Purpose	Defines macros	Defines typed, read-only objects	Defines named integer constants
+Type checking	No inherent type	Yes	Integer constants
+Scope	Preprocessor substitution; not governed by C variable scope	Follows normal C scope rules	Enumerator names follow C scope rules
+Debugging	Often not shown as a variable	Can be visible in a debugger	Names may be available to debugging tools
+Storage	No storage for the macro itself	May occupy storage, depending on use	Enumerator values do not require separate storage
+Best use	Tariff values and slab limits	Typed configuration values	Categories and status codes
+
+Naming convention: Use uppercase letters and underscores, such as RATE2_PAISE, SLAB1_UNITS and FIXED_CHARGE_PAISE.
+
+For this program, #define is suitable because the task specifically requires macros and allows a tariff revision in one place. For a larger application, const can provide stronger type checking.
+
+CODE:
+
+
+#include <stdio.h>
+
+#define SLAB1_UNITS 100
+#define SLAB2_UNITS 200
+#define RATE1_PAISE 0
+#define RATE2_PAISE 225
+#define RATE3_PAISE 450
+#define FIXED_CHARGE_PAISE 5000L
+
+/* Returns the bill in paise */
+long compute_bill(int units)
+{
+    long paise = FIXED_CHARGE_PAISE;
+
+    // Charge for the first slab
+    if (units > 0 && units <= SLAB1_UNITS)
+        paise += (long)units * RATE1_PAISE;
+
+    // Charge for units 101 to 200
+    if (units > SLAB1_UNITS)
+    {
+        int slab2 = units < SLAB2_UNITS
+                        ? units - SLAB1_UNITS
+                        : SLAB2_UNITS - SLAB1_UNITS;
+
+        paise += (long)slab2 * RATE2_PAISE;
+    }
+
+    // Charge for units above 200
+    if (units > SLAB2_UNITS)
+        paise += (long)(units - SLAB2_UNITS) * RATE3_PAISE;
+
+    return paise;
+}
+
+int main(void)
+{
+    int tests[] = {0, 100, 150, 200, 350};
+    int n = sizeof tests / sizeof tests[0];
+
+    for (int i = 0; i < n; i++)
+    {
+        long p = compute_bill(tests[i]);
+
+        printf("%3d units -> Rs %ld.%02ld\n",
+               tests[i], p / 100, p % 100);
+    }
+
+    return 0;
+}
+
+OUTPUT:
+
+  0 units -> Rs 50.00
+100 units -> Rs 50.00
+150 units -> Rs 162.50
+200 units -> Rs 275.00
+350 units -> Rs 950.00
+
+
+
+
