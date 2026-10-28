@@ -1,0 +1,119 @@
+TASK 1 – Understand the Problem and Identify the Data (4 Marks)
+1. Brief analysis
+The Grama Jyothi Rural Electricity Co-operative needs a reliable C program to calculate electricity bills for households. The program must calculate consumed units, apply the correct tariff slabs, add the fixed charge, and produce an accurate total bill without negative values or rounding errors.
+Inputs, outputs and data types
+Data item	Data type	Justification
+Household number	int	Identifies each household.
+Category	char	Stores a category code such as D for domestic.
+Previous reading	uint16_t	Stores a meter reading from 0 to 65535.
+Current reading	uint16_t	Stores the latest meter reading.
+Units consumed	uint32_t	Stores consumption, including meter rollover.
+Energy charge	double	Represents the calculated energy charge.
+Fixed charge	double	Stores the fixed amount charged per bill.
+Total bill	double	Stores the sum of the charges.
+
+Constants: Meter maximum reading (65535), free-unit limit (100), slab limit (200), and tariff rates (₹2.25 and ₹4.50 per unit). These values should be defined centrally so a tariff revision can be applied consistently.
+
+Correctness rules:
+- The bill must never be negative.
+- Units consumed must account for meter rollover.
+- The total must equal the energy charge plus the fixed charge.
+- Monetary amounts must be rounded to two decimal places.
+- Invalid readings or household details must be rejected.
+Assumptions: The meter is a 16-bit meter, the first 100 units are free, units 101–200 cost ₹2.25 each, and units above 200 cost ₹4.50 each. For this example, the fixed charge is ₹50 per household. The fixed charge is an assumption because the scenario does not specify its value.
+
+CODE:
+
+
+#include <stdio.h>
+#include <stdint.h>
+
+#define METER_MAX 65535U
+#define METER_MODULUS 65536U
+#define FREE_LIMIT 100U
+#define SLAB_LIMIT 200U
+#define RATE_1 225ULL       // Rs. 2.25 in paise
+#define RATE_2 450ULL       // Rs. 4.50 in paise
+#define FIXED_CHARGE 5000ULL // Rs. 50.00 in paise
+
+int main(void)
+{
+    int household;
+    char category;
+    unsigned int previous, current, units;
+    uint64_t energy = 0, total;
+    unsigned int slab2, slab3;
+
+    printf("Enter household number, category, previous reading "
+           "and current reading:\n");
+
+    if (scanf("%d %c %u %u", &household, &category,
+              &previous, &current) != 4 ||
+        household <= 0 || previous > METER_MAX ||
+        current > METER_MAX)
+    {
+        printf("Invalid input!\n");
+        return 1;
+    }
+
+    // Calculate units, including meter rollover
+    if (current >= previous)
+        units = current - previous;
+    else
+        units = (METER_MODULUS - previous) + current;
+
+    // First 100 units are free
+    if (units > FREE_LIMIT)
+    {
+        slab2 = (units < SLAB_LIMIT)
+                    ? units - FREE_LIMIT
+                    : SLAB_LIMIT - FREE_LIMIT;
+
+        energy += (uint64_t)slab2 * RATE_1;
+    }
+
+    // Units above 200 cost Rs. 4.50 each
+    if (units > SLAB_LIMIT)
+    {
+        slab3 = units - SLAB_LIMIT;
+        energy += (uint64_t)slab3 * RATE_2;
+    }
+
+    total = energy + FIXED_CHARGE;
+
+    printf("\n--- Electricity Bill ---\n");
+    printf("Household Number : %d\n", household);
+    printf("Category         : %c\n", category);
+    printf("Units Consumed   : %u\n", units);
+
+    printf("Energy Charge    : Rs. %llu.%02llu\n",
+           (unsigned long long)(energy / 100),
+           (unsigned long long)(energy % 100));
+
+    printf("Fixed Charge     : Rs. 50.00\n");
+    printf("Total Bill       : Rs. %llu.%02llu\n",
+           (unsigned long long)(total / 100),
+           (unsigned long long)(total % 100));
+
+    return 0;
+}
+
+SAMPLE INPUT:
+1001 D 80 250
+
+OUTPUT:
+
+--- Electricity Bill ---
+Household Number : 1001
+Category         : D
+Units Consumed   : 170
+Energy Charge    : Rs. 157.50
+Fixed Charge     : Rs. 50.00
+Total Bill       : Rs. 207.50
+
+
+
+
+
+
+
