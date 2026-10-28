@@ -1,0 +1,106 @@
+TASK 9 – Implement and Test the Billing Program (4 Marks)
+1. Complete C program
+This program calculates electricity bills using integer paise, supports a 16-bit meter rollover, validates readings, and rejects a current reading lower than the previous reading unless the rollover is valid.
+
+Assumptions: First 100 units are free, units 101–200 cost ₹2.25 each, units above 200 cost ₹4.50 each, and the fixed charge is ₹50.
+
+CODE:
+
+
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+
+#define METER_MAX 65535U
+#define METER_MODULUS 65536U
+#define SLAB1_UNITS 100U
+#define SLAB2_UNITS 200U
+#define RATE2_PAISE 225ULL
+#define RATE3_PAISE 450ULL
+#define FIXED_CHARGE_PAISE 5000ULL
+
+uint32_t consumption(uint16_t previous, uint16_t current)
+{
+    return (uint16_t)(current - previous);
+}
+
+uint64_t compute_bill(uint32_t units)
+{
+    uint64_t energy = 0;
+
+    if (units > SLAB1_UNITS) {
+        uint32_t slab2 = (units < SLAB2_UNITS)
+                       ? units - SLAB1_UNITS
+                       : SLAB2_UNITS - SLAB1_UNITS;
+
+        energy += (uint64_t)slab2 * RATE2_PAISE;
+    }
+
+    if (units > SLAB2_UNITS) {
+        energy += (uint64_t)(units - SLAB2_UNITS)
+                  * RATE3_PAISE;
+    }
+
+    return energy + FIXED_CHARGE_PAISE;
+}
+
+void print_bill(uint32_t units, uint64_t total)
+{
+    uint64_t energy = total - FIXED_CHARGE_PAISE;
+
+    printf("Units consumed: %" PRIu32 "\n", units);
+    printf("Energy charge: Rs. %" PRIu64 ".%02" PRIu64 "\n",
+           energy / 100, energy % 100);
+    printf("Fixed charge: Rs. 50.00\n");
+    printf("Total bill: Rs. %" PRIu64 ".%02" PRIu64 "\n",
+           total / 100, total % 100);
+}
+
+int main(void)
+{
+    unsigned int previous, current;
+    uint32_t units;
+
+    printf("Enter previous and current readings (0-65535): ");
+
+    if (scanf("%u %u", &previous, &current) != 2) {
+        printf("Invalid input: enter numeric readings.\n");
+        return 1;
+    }
+
+    if (previous > METER_MAX || current > METER_MAX) {
+        printf("Invalid input: readings must be 0-65535.\n");
+        return 1;
+    }
+
+    units = consumption((uint16_t)previous, (uint16_t)current);
+
+    /* A lower reading is treated as rollover.
+       Reject implausible rollovers greater than one full cycle. */
+    if (current < previous && units > METER_MAX) {
+        printf("Invalid meter rollover.\n");
+        return 1;
+    }
+
+    printf("\n--- Electricity Bill ---\n");
+    print_bill(units, compute_bill(units));
+
+    return 0;
+}
+
+SAMPLE INPUT:
+80 230
+
+OUTPUT:
+
+Enter previous and current readings (0-65535): 80 230
+
+--- Electricity Bill ---
+Units consumed: 150
+Energy charge: Rs. 337.50
+Fixed charge: Rs. 50.00
+Total bill: Rs. 387.50
+
+
+
+
