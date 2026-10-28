@@ -1,0 +1,70 @@
+
+TASK 4 – Use Macros Safely (4 Marks)
+1. Brief explanation
+Macros are defined using #define and processed by the C preprocessor before compilation. They help reuse small expressions, but unsafe macros can produce incorrect results because the preprocessor performs text substitution rather than normal function evaluation.
+
+Examples of useful macros include converting rupees to paise and finding the larger of two numbers.
+
+CODE:
+
+
+#include <stdio.h>
+
+#define RUPEES_TO_PAISE(r) ((r) * 100)
+#define SQUARE(x) ((x) * (x))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+// Static inline alternatives
+static inline int square(int x)
+{
+    return x * x;
+}
+
+static inline int max_int(int a, int b)
+{
+    return (a > b) ? a : b;
+}
+
+int main(void)
+{
+    int a, b;
+
+    printf("Enter two integers: ");
+
+    if (scanf("%d %d", &a, &b) != 2)
+    {
+        printf("Invalid input!\n");
+        return 1;
+    }
+
+    printf("Rupees to paise: %d\n", RUPEES_TO_PAISE(a));
+    printf("Square of (a + 1): %d\n", SQUARE(a + 1));
+    printf("Maximum using macro: %d\n", MAX(a, b));
+    printf("Square using inline function: %d\n", square(a));
+    printf("Maximum using inline function: %d\n", max_int(a, b));
+
+    return 0;
+}
+
+
+
+
+SAMPLE INPUT:
+
+5 8
+
+OUTPUT:
+
+Enter two integers: 5 8
+Rupees to paise: 500
+Square of (a + 1): 36
+Maximum using macro: 8
+Square using inline function: 25
+Maximum using inline function: 8
+
+
+
+
+
+
+
