@@ -1,0 +1,102 @@
+TASK 6 – Read and Print Data Correctly (4 Marks)
+1. Brief explanation
+In C, scanf() reads input and printf() displays output. The format specifier must match the variable's data type. Using the wrong specifier can cause incorrect output or undefined behavior.
+Data type	scanf() specifier	printf() specifier
+int	%d	%d
+unsigned int	%u	%u
+long	%ld	%ld
+long long	%lld	%lld
+float	%f	%f
+double	%lf	%f
+char	%c	%c
+Character string	%s	%s
+
+Important: For scanf(), use %f for float and %lf for double. For printf(), %f is used to print both float values (promoted to double) and double values.
+
+To detect invalid input, check the return value of scanf(). For example, scanf("%d", &units) != 1 indicates that a valid integer was not read.
+
+CODE:
+
+
+#include <stdio.h>
+
+#define SLAB1_UNITS 100
+#define SLAB2_UNITS 200
+#define RATE2_PAISE 225LL
+#define RATE3_PAISE 450LL
+#define FIXED_CHARGE_PAISE 5000LL
+
+int main(void)
+{
+    int household, units;
+    char category;
+    long long energy = 0;
+    long long total;
+
+    printf("Enter household number, category and units: ");
+
+    if (scanf("%d %c %d", &household, &category, &units) != 3)
+    {
+        printf("Invalid input! Enter valid values.\n");
+        return 1;
+    }
+
+    if (household <= 0 || units < 0)
+    {
+        printf("Invalid household number or units.\n");
+        return 1;
+    }
+
+    if (units > SLAB1_UNITS)
+    {
+        int slab2 = (units < SLAB2_UNITS)
+                        ? units - SLAB1_UNITS
+                        : SLAB2_UNITS - SLAB1_UNITS;
+
+        energy += (long long)slab2 * RATE2_PAISE;
+    }
+
+    if (units > SLAB2_UNITS)
+    {
+        energy += (long long)(units - SLAB2_UNITS)
+                  * RATE3_PAISE;
+    }
+
+    total = energy + FIXED_CHARGE_PAISE;
+
+    printf("\n--- Electricity Bill ---\n");
+    printf("Household number: %d\n", household);
+    printf("Category: %c\n", category);
+    printf("Units consumed: %d\n", units);
+
+    printf("Energy charge: Rs. %lld.%02lld\n",
+           energy / 100, energy % 100);
+
+    printf("Fixed charge: Rs. %lld.%02lld\n",
+           FIXED_CHARGE_PAISE / 100,
+           FIXED_CHARGE_PAISE % 100);
+
+    printf("Total bill: Rs. %lld.%02lld\n",
+           total / 100, total % 100);
+
+    return 0;
+}
+
+SAMPLE INPUT:
+1001 D 150
+
+OUTPUT:
+
+Enter household number, category and units: 1001 D 150
+
+--- Electricity Bill ---
+Household number: 1001
+Category: D
+Units consumed: 150
+Energy charge: Rs. 112.50
+Fixed charge: Rs. 50.00
+Total bill: Rs. 162.50
+
+
+
+
