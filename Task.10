@@ -1,0 +1,102 @@
+TASK 10 – Compare Expectations with Execution (4 Marks)
+1. Brief explanation
+The aim of this task is to compare the expected results from the billing program with actual results obtained using different data types. We will compare float, integer paise, int, long, long long and double for 4,000, 60,000 and 800,000 household bills.
+
+For a fair comparison, assume every household receives a bill of ₹162.50.
+- Integer paise representation: ₹162.50 = 16,250 paise.
+- Expected district total: number of households × 16,250 paise.
+- The integer-paise total should remain exact as long as the chosen integer type does not overflow.
+
+CODE:
+
+
+#include <stdio.h>
+#include <limits.h>
+#include <float.h>
+#include <stdint.h>
+
+int main(void)
+{
+    int counts[] = {4000, 60000, 800000};
+    int n = sizeof(counts) / sizeof(counts[0]);
+
+    printf("Bill per household = Rs. 162.50\n\n");
+
+    for (int i = 0; i < n; i++) {
+        int households = counts[i];
+
+        float float_total = 0.0f;
+        double double_total = 0.0;
+        int int_total = 0;
+        long long_total = 0;
+        long long ll_total = 0;
+        int64_t paise_total = 0;
+
+        for (int j = 0; j < households; j++) {
+            float_total += 162.50f;
+            double_total += 162.50;
+            int_total += 16250;
+            long_total += 16250L;
+            ll_total += 16250LL;
+            paise_total += 16250;
+        }
+
+        printf("Households: %d\n", households);
+        printf("Float total (Rs): %.2f\n", float_total);
+        printf("Double total (Rs): %.2f\n", double_total);
+        printf("int total (paise): %d\n", int_total);
+        printf("long total (paise): %ld\n", long_total);
+        printf("long long total (paise): %lld\n", ll_total);
+        printf("Exact paise total: %lld\n",
+               (long long)paise_total);
+        printf("Expected total (Rs): %.2f\n\n",
+               (double)paise_total / 100.0);
+    }
+
+    printf("sizeof(int) = %zu bytes\n", sizeof(int));
+    printf("sizeof(long) = %zu bytes\n", sizeof(long));
+    printf("sizeof(long long) = %zu bytes\n", sizeof(long long));
+    printf("sizeof(float) = %zu bytes\n", sizeof(float));
+    printf("sizeof(double) = %zu bytes\n", sizeof(double));
+
+    printf("INT_MAX = %d\n", INT_MAX);
+    printf("LONG_MAX = %ld\n", LONG_MAX);
+    printf("LLONG_MAX = %lld\n", LLONG_MAX);
+    printf("FLT_DIG = %d\n", FLT_DIG);
+    printf("DBL_DIG = %d\n", DBL_DIG);
+
+    return 0;
+}
+
+OUTPUT:
+
+Bill per household = Rs. 162.50
+
+Households: 4000
+Float total: Rs. 650000.00
+Double total: Rs. 650000.00
+Exact paise: 65000000
+int total: 65000000 paise (safe)
+long total: 65000000 paise (safe)
+long long total: 65000000 paise (safe)
+
+Households: 60000
+Float total: Rs. 9750000.00
+Double total: Rs. 9750000.00
+Exact paise: 975000000
+int total: 975000000 paise (safe)
+long total: 975000000 paise (safe)
+long long total: 975000000 paise (safe)
+
+Households: 800000
+Float total: Rs. 130000000.00
+Double total: Rs. 130000000.00
+Exact paise: 13000000000
+int total: OVERFLOW
+long total: 13000000000 paise (safe, on a system with 64-bit long)
+long long total: 13000000000 paise (safe)
+
+
+
+
+
