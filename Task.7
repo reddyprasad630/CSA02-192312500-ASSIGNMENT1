@@ -1,0 +1,65 @@
+TASK 7 – Control Type Conversion and Precision (4 Marks)
+1. Brief explanation
+In C, type conversion occurs when values of different data types are used together. Incorrect conversions can cause precision loss, unexpected integer division results or overflow.
+
+In the electricity billing program, conversion points include:
+- Multiplying units (int) by tariff rates (long long).
+- Adding energy charges and fixed charges.
+- Dividing the total paise by 100 to display rupees.
+- Converting a larger integer type such as long to int.
+- Converting fractional rupee charges into integer paise.
+Recommended approach: Keep monetary calculations in integer paise. Use explicit casts where necessary and apply one consistent rounding rule when a fractional charge must be converted to paise.
+
+CODE:
+
+
+#include <stdio.h>
+#include <stdint.h>
+#include <limits.h>
+
+int main(void)
+{
+    // Example 1: Integer division
+    int units = 199;
+    printf("1. Integer division: %d\n", units / 100);
+
+    // Example 2: Floating-point precision
+    float amount = 0.1f + 0.2f;
+    printf("2. Float addition: %.9f\n", amount);
+
+    // Example 3: Casting a large value to int
+    long long large = 3000000000LL;
+    printf("3. Large value as long long: %lld\n", large);
+
+    if (large > INT_MAX || large < INT_MIN)
+        printf("   Value is outside the int range.\n");
+    else
+        printf("   Cast to int: %d\n", (int)large);
+
+    // Correct conversion to paise using rounding
+    double rupees = 12.345;
+    long long paise = (long long)(rupees * 100.0 + 0.5);
+
+    printf("4. Rounded paise: %lld\n", paise);
+
+    // Correct integer-pa​​ise display
+    long long total = 16250;
+    printf("5. Bill: Rs. %lld.%02lld\n",
+           total / 100, total % 100);
+
+    return 0;
+}
+
+OUTPUT:
+
+1. Integer division: 1
+2. Float addition: 0.300000012
+3. Large value as long long: 3000000000
+   Value is outside the int range.
+4. Rounded paise: 1235
+5. Bill: Rs. 162.50
+
+
+
+
+
