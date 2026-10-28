@@ -1,0 +1,85 @@
+TASK 8 – Trace the Compilation Process (4 Marks)
+1. Brief explanation
+A C program passes through four main stages before it runs: preprocessing, compilation, assembly and linking. Each stage transforms the source code into a form that the next stage can use.
+1. Source code
+
+billing.c
+
+2. Preprocessing — gcc -E
+
+Expands macros and includes headers
+
+3. Compilation — gcc -S
+
+Generates assembly code
+
+4. Assembly — gcc -c
+
+Generates an object file
+
+5. Linking
+
+Produces the executable program
+
+CODE:
+
+
+#include <stdio.h>
+
+#define FIXED_CHARGE_PAISE 5000L
+#define RATE2_PAISE 225L
+#define RATE3_PAISE 450L
+
+long compute_bill(int units)
+{
+    long paise = FIXED_CHARGE_PAISE;
+
+    if (units < 0)
+        return -1;
+
+    if (units > 100) {
+        int slab2 = units < 200 ? units - 100 : 100;
+        paise += (long)slab2 * RATE2_PAISE;
+    }
+
+    if (units > 200)
+        paise += (long)(units - 200) * RATE3_PAISE;
+
+#ifdef DEBUG
+    printf("[DEBUG] Energy and fixed charges = %ld paise\n",
+           paise);
+#endif
+
+    return paise;
+}
+
+int main(void)
+{
+    int units;
+
+    printf("Enter units consumed: ");
+
+    if (scanf("%d", &units) != 1 || units < 0) {
+        printf("Invalid input!\n");
+        return 1;
+    }
+
+    long bill = compute_bill(units);
+
+    printf("Total bill: Rs. %ld.%02ld\n",
+           bill / 100, bill % 100);
+
+    return 0;
+}
+
+SAMPLE INPUT:
+350
+
+OUTPUT:
+
+Enter units consumed: 350
+Total bill: Rs. 950.00
+
+
+
+
