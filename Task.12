@@ -1,0 +1,134 @@
+TASK 12 – Re-evaluate and Adapt the Design (8 Marks)
+A. Impact analysis (2 marks)
+The original design calculates a monthly bill using previous and current meter readings. The new smart-meter system sends readings in watt-hours every 15 minutes, applies a peak-hour tariff from 6 PM to 10 PM, and must allow tariff changes without recompiling.
+
+The design should be modified into an interval-based billing system.
+Original design	New requirement	Impact
+Two monthly readings	35,040 readings per house per year	Store timestamped interval readings
+uint16_t meter readings	Watt-hour values and cumulative yearly energy	Use wider integer types
+Fixed #define tariff rates	Tariffs change at runtime	Read and validate a configuration file
+One energy rate	Peak-hour rate is 20% higher	Classify each interval by time
+Integer paise totals	Many interval charges accumulated	Use wide integer arithmetic and explicit rounding
+
+Largest values
+Assuming 35,040 intervals per year and a maximum 16-bit watt-hour value per interval:
+\[
+35,040 \times 65,535
+= 2,295,986,400 \text{ Wh}
+\]
+
+This is approximately 2.296 billion Wh, or 2,295,986.4 kWh, per house per year under that theoretical maximum.
+
+A 32-bit signed int cannot safely store this Wh total because its maximum is 2,147,483,647. A 64-bit integer can store it safely.
+
+The actual meter specification must determine the maximum Wh value per interval; the calculation above assumes each interval reading itself is limited to 65,535 Wh.
+B. Evaluation of the original design (2 marks)
+The original design is partly suitable, but it cannot be retained unchanged.
+Original feature	Evaluation	Revised choice
+uint16_t	Suitable only if an individual interval's Wh value fits within 65,535	Keep only if confirmed by the meter specification
+uint32_t yearly Wh total	Insufficient for the theoretical maximum of 2,295,986,400 Wh per year	Use uint64_t
+uint64_t for money	Suitable for annual and district totals, subject to overflow checks	Retain
+#define RATE2_PAISE 225	Requires recompilation to change	Load rates from a configuration file
+Fixed slab if statements	Do not support peak and off-peak periods by themselves	Add interval classification
+Integer paise	Prevents floating-point addition errors	Retain, but accumulate fractional-paise calculations before rounding
+
+The 20% peak increase can be represented as a multiplier of 120/100. Because a 15-minute interval may produce a fractional-paise charge, the revised program should accumulate charges as integer numerators and round the final energy charge to the nearest paise.
+
+CODE:
+
+
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+
+#define MAX_INTERVALS 35040U
+#define MAX_INTERVAL_WH 65535U
+#define PEAK_MULTIPLIER 120ULL
+#define NORMAL_MULTIPLIER 100ULL
+#define RATE_LIMIT 1000000ULL
+#define FIXED_LIMIT 1000000000000ULL
+
+int main(void)
+{
+    FILE *file = fopen("tariff.txt", "r");
+    unsigned long long rate, fixed;
+    uint64_t total_numerator = 0;
+    uint64_t energy_paise, total;
+    unsigned int n, hour, wh;
+
+    if (file == NULL) {
+        printf("Cannot open tariff.txt\n");
+        return 1;
+    }
+
+    if (fscanf(file,
+        "base_rate_paise_per_kwh=%llu\n"
+        "fixed_charge_paise=%llu",
+        &rate, &fixed) != 2 ||
+        rate > RATE_LIMIT || fixed > FIXED_LIMIT) {
+        printf("Invalid tariff configuration\n");
+        fclose(file);
+        return 1;
+    }
+    fclose(file);
+
+    printf("Enter number of intervals (1-%u): ", MAX_INTERVALS);
+
+    if (scanf("%u", &n) != 1 ||
+        n == 0 || n > MAX_INTERVALS) {
+        printf("Invalid interval count\n");
+        return 1;
+    }
+
+    for (unsigned int i = 0; i < n; i++) {
+        printf("Enter hour (0-23) and energy (Wh): ");
+
+        if (scanf("%u %u", &hour, &wh) != 2 ||
+            hour > 23 || wh > MAX_INTERVAL_WH) {
+            printf("Invalid interval data\n");
+            return 1;
+        }
+
+        uint64_t multiplier =
+            (hour >= 18 && hour < 22)
+            ? PEAK_MULTIPLIER : NORMAL_MULTIPLIER;
+
+        /* Numerator denominator = 100,000:
+           Wh * paise/kWh * multiplier / 100,000 */
+        total_numerator +=
+            (uint64_t)wh * rate * multiplier;
+    }
+
+    /* Round energy charge once to nearest paise */
+    energy_paise = (total_numerator + 50000ULL) / 100000ULL;
+    total = energy_paise + fixed;
+
+    printf("\n--- Smart Meter Bill ---\n");
+    printf("Energy charge: Rs. %" PRIu64 ".%02" PRIu64 "\n",
+           energy_paise / 100, energy_paise % 100);
+    printf("Fixed charge: Rs. %" PRIu64 ".%02" PRIu64 "\n",
+           fixed / 100, fixed % 100);
+    printf("Total bill: Rs. %" PRIu64 ".%02" PRIu64 "\n",
+           total / 100, total % 100);
+
+    return 0;
+}
+
+SAMPLE INPUT AND OUTPUT:
+
+Enter number of intervals (1-35040): 4
+Enter hour (0-23) and energy (Wh): 17 1000
+Enter hour (0-23) and energy (Wh): 18 1000
+Enter hour (0-23) and energy (Wh): 21 500
+Enter hour (0-23) and energy (Wh): 22 500
+
+OUTPUT:
+
+--- Smart Meter Bill ---
+Energy charge: Rs. 7.43
+Fixed charge: Rs. 50.00
+Total bill: Rs. 57.43
+
+
+
+
